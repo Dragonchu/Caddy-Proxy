@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Deploy
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/new/template/caddy-proxy)
 
 ---
 
