@@ -250,7 +250,7 @@ railway logs
 - Verify the Next.js app is built in production mode for optimal performance
 - Check that the Next.js app is listening on `0.0.0.0` (all interfaces), not just `localhost`
 
-**4. Custom domain not working**
+**5. Custom domain not working**
 - Verify CNAME record is correctly configured
 - Wait up to 72 hours for DNS propagation
 - Check Railway dashboard shows green checkmark
