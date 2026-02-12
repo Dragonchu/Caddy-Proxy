@@ -1,72 +1,31 @@
 {
     admin off
-    log {
-        output stdout
-        format json
-        level {$LOG_LEVEL:INFO}
-    }
     auto_https off
 }
 
 :{$PORT:8080} {
-    # Health check endpoint
+    # 健康检查（可选，方便 Railway 监控）
     handle /health {
         respond "OK" 200
     }
 
-    # Main proxy configuration
-    handle {
-        reverse_proxy {$PROXY_TARGET} {
-            # Header management
+    # 1. Service A：仅匹配根路径 /
+    handle / {
+        reverse_proxy {$LANDING_TARGET} {
             header_up Host {upstream_hostport}
             header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-            header_up X-Forwarded-Host {host}
-
-            # WebSocket support
-            @websocket {
-                header Connection *Upgrade*
-                header Upgrade websocket
-            }
-            
-            # Health check for upstream
-            health_uri /health
-            health_interval 30s
-            health_timeout 5s
-            health_status 200
         }
-
-        # Compression
-        encode {
-            gzip
-            minimum_length 1024
-        }
-
-        # Security headers
-        header {
-            X-Content-Type-Options "nosniff"
-            X-Frame-Options "SAMEORIGIN"
-            X-XSS-Protection "1; mode=block"
-            Referrer-Policy "strict-origin-when-cross-origin"
-            -Server
-        }
-
-        # CORS (customize as needed)
-        @cors_preflight {
-            method OPTIONS
-        }
-        header @cors_preflight {
-            Access-Control-Allow-Origin "*"
-            Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-            Access-Control-Allow-Headers "Content-Type, Authorization"
-            Access-Control-Max-Age "3600"
-        }
-        respond @cors_preflight 204
     }
 
-    # Error handling
-    handle_errors {
-        respond "{err.status_code} {err.status_text}"
+    # 2. Service B：匹配其他所有路径 (包含 WebSocket)
+    handle {
+        reverse_proxy {$APP_TARGET} {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            # Caddy 会自动识别并支持 WebSocket，无需额外配置
+        }
     }
+
+    # 全局压缩优化
+    encode gzip
 }
