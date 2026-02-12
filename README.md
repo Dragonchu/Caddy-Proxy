@@ -57,7 +57,22 @@ PROXY_TARGET=http://notebook.railway.internal:8888
 PROXY_TARGET=http://huly.railway.internal:8080
 ```
 
-### 5. Multiple Backend Services (Custom Caddyfile)
+### 5. Next.js Application (Landing_Target + APP_TARGET)
+
+For Next.js applications that need to coexist with other services:
+
+```bash
+LANDING_TARGET=http://landing.railway.internal:3000
+APP_TARGET=http://app.railway.internal:8080
+```
+
+The Caddyfile is pre-configured to route:
+- `/_next/*` → LANDING_TARGET (Next.js static assets)
+- `/api/*` → LANDING_TARGET (Next.js API routes)
+- `/` → LANDING_TARGET (Landing page)
+- All other paths → APP_TARGET (Your main application)
+
+### 6. Multiple Backend Services (Custom Caddyfile)
 
 For complex routing, create a custom Caddyfile:
 
@@ -150,7 +165,26 @@ Internet → Caddy (public)
   └─ /api/*     → http://backend.railway.internal:8080
 ```
 
-### Pattern 3: WebSocket Proxy
+### Pattern 3: Next.js Landing Page + Main Application
+
+Serve a Next.js landing page on root and route everything else to your main app:
+
+```
+Internet → Caddy (public)
+  ↓
+  ├─ /          → http://landing-nextjs.railway.internal:3000 (Landing page)
+  ├─ /_next/*   → http://landing-nextjs.railway.internal:3000 (Next.js assets)
+  ├─ /api/*     → http://landing-nextjs.railway.internal:3000 (Next.js API routes)
+  └─ /*         → http://main-app.railway.internal:8080 (Main application)
+```
+
+**Environment Variables:**
+```bash
+LANDING_TARGET=http://landing-nextjs.railway.internal:3000
+APP_TARGET=http://main-app.railway.internal:8080
+```
+
+### Pattern 4: WebSocket Proxy
 
 Proxy WebSocket connections for real-time apps:
 
@@ -208,6 +242,13 @@ railway logs
 - Ensure `Connection` and `Upgrade` headers are preserved
 - Backend must support WebSocket protocol
 - Check if backend is properly handling WebSocket handshake
+
+**4. Next.js app not loading properly**
+- Verify `LANDING_TARGET` is set correctly
+- Check that Next.js app is running on the specified port
+- Ensure `/_next/*` assets are being served (check browser DevTools Network tab)
+- Verify the Next.js app is built in production mode for optimal performance
+- Check that the Next.js app is listening on `0.0.0.0` (all interfaces), not just `localhost`
 
 **4. Custom domain not working**
 - Verify CNAME record is correctly configured
