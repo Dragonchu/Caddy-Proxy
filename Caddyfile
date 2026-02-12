@@ -20,9 +20,16 @@
     # 2. Service B：匹配其他所有路径 (包含 WebSocket)
     handle {
         reverse_proxy {$APP_TARGET} {
-            header_up Host {upstream_hostport}
+            # 只有当后端服务（如 Railway 内网）强制要求 Host 匹配时才使用 {upstream_hostport}
+            # 否则，建议保留原始 Host 或显式透传
+            header_up Host {host} 
+            
             header_up X-Real-IP {remote_host}
-            # Caddy 会自动识别并支持 WebSocket，无需额外配置
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            
+            # 显式确保 Origin 透传（虽然默认会传，但在三层架构中显式指定更稳妥）
+            header_up Origin {header.Origin}
         }
     }
 
